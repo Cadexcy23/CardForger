@@ -38,7 +38,7 @@ void resizeMap(int newX, int newY)
 
 void populateMap()//MAP X AND Y MANUAL INPUTS MUST BE FLIPPED
 {
-	srand(23);
+	//srand(23);
 
 	for (int x = 0; x < Mapper::activeMap.tiles.size(); x++)
 	{
@@ -719,150 +719,153 @@ bool player(int entID)
 	//TEMP
 	if (true)
 	{
-		generateEntPaths(entID, 5);//maybe make bigger later
-
-
-
-
-		//make ent walk along path made by finder
-		//determine what direction(s) we are moving
-		//start from goal and trace back til we get to the tile that connects the one we are on
-		Artist::pos entTilePos = { int(Mapper::activeEntities[entID].xPos) / 64, int(Mapper::activeEntities[entID].yPos) / 64 };
-		Artist::pos entPathsTilePos = { entTilePos.x - Mapper::activeEntities[entID].pathsMapPos.x, entTilePos.y - Mapper::activeEntities[entID].pathsMapPos.y };
-		Artist::pos destTilePos = { int(Mapper::activeEntities[entID].destination.x) / 64, int(Mapper::activeEntities[entID].destination.y) / 64 };
-		//the destination in tile format in context of the path grid
-		Artist::pos nextCheck = { destTilePos.x - Mapper::activeEntities[entID].pathsMapPos.x, destTilePos.y - Mapper::activeEntities[entID].pathsMapPos.y };
-		//if we already there dont do anything
-		if (entTilePos.x != destTilePos.x || entTilePos.y != destTilePos.y)
+		if (Controller::FPSLock)
 		{
-			//make sure the tile is visitable
-			if (Mapper::activeEntities[entID].visitable[nextCheck.x][nextCheck.y])//prolly needs to be in context of paths
+			generateEntPaths(entID, 5);//maybe make bigger later
+
+
+
+
+			//make ent walk along path made by finder
+			//determine what direction(s) we are moving
+			//start from goal and trace back til we get to the tile that connects the one we are on
+			Artist::pos entTilePos = { int(Mapper::activeEntities[entID].xPos) / 64, int(Mapper::activeEntities[entID].yPos) / 64 };
+			Artist::pos entPathsTilePos = { entTilePos.x - Mapper::activeEntities[entID].pathsMapPos.x, entTilePos.y - Mapper::activeEntities[entID].pathsMapPos.y };
+			Artist::pos destTilePos = { int(Mapper::activeEntities[entID].destination.x) / 64, int(Mapper::activeEntities[entID].destination.y) / 64 };
+			//the destination in tile format in context of the path grid
+			Artist::pos nextCheck = { destTilePos.x - Mapper::activeEntities[entID].pathsMapPos.x, destTilePos.y - Mapper::activeEntities[entID].pathsMapPos.y };
+			//if we already there dont do anything
+			if (entTilePos.x != destTilePos.x || entTilePos.y != destTilePos.y)
 			{
-				Artist::pos movePos = entPathsTilePos;
-				bool looking = true;
-				while (looking)
+				//make sure the tile is visitable
+				if (Mapper::activeEntities[entID].visitable[nextCheck.x][nextCheck.y])//prolly needs to be in context of paths
 				{
-					//if the position we get from the path is = to where the ent is currently save that as where we need to go next, if not mark it for where we need to check from next loop
-					if (Mapper::activeEntities[entID].paths[nextCheck.x][nextCheck.y].x == entPathsTilePos.x && Mapper::activeEntities[entID].paths[nextCheck.x][nextCheck.y].y == entPathsTilePos.y)
+					Artist::pos movePos = entPathsTilePos;
+					bool looking = true;
+					while (looking)
 					{
-						movePos = nextCheck;
-						looking = false;
-					}
-					else
-					{
-						nextCheck = Mapper::activeEntities[entID].paths[nextCheck.x][nextCheck.y];
-					}
-				}
-				//variables for how we need to move on each axis MAYBE MAKE IT A GOAL(MIDDLE OF THE TILE) THAT WE ROTATE TOO THEN MOVE FORWARD IN THAT DIRECTION
-				int xMove = movePos.x - entPathsTilePos.x;
-				int yMove = movePos.y - entPathsTilePos.y;
-
-
-
-
-				//use move variables to move ent towards destination MAKE USE OF ABILITIES NOT ADDING VEL DIRECTLY
-				//where we want the ent to be facing
-				float rotationGoal = -1;
-				//total vel to be applied
-				float totalApplyVel = .35;
-				//double if running
-				if (Mapper::activeEntities[entID].running)
-				{
-					totalApplyVel *= 2;
-				}
-				//list of what directions we are going MAYBE SWAP OUT FOR MAKING IT WALK TOWARDS THE WAY ITS FACING
-				std::vector<int> dirList;
-				for (int i = 0; i < Mapper::activeEntities[entID].abilities.size(); i++)//go thru each ability
-				{
-					if (Mapper::activeEntities[entID].abilities[i].function == moveUp)//if the move up function
-					{
-						if (yMove == -1)
+						//if the position we get from the path is = to where the ent is currently save that as where we need to go next, if not mark it for where we need to check from next loop
+						if (Mapper::activeEntities[entID].paths[nextCheck.x][nextCheck.y].x == entPathsTilePos.x && Mapper::activeEntities[entID].paths[nextCheck.x][nextCheck.y].y == entPathsTilePos.y)
 						{
-							dirList.push_back(0);
-							rotationGoal = 360;
+							movePos = nextCheck;
+							looking = false;
+						}
+						else
+						{
+							nextCheck = Mapper::activeEntities[entID].paths[nextCheck.x][nextCheck.y];
 						}
 					}
-					if (Mapper::activeEntities[entID].abilities[i].function == moveDown)//if the move down function
-					{
-						if (yMove == 1)
-						{
-							dirList.push_back(1);
-							rotationGoal = 180;
-						}
-					}
-					if (Mapper::activeEntities[entID].abilities[i].function == moveLeft)//if the move left function
-					{
-						if (xMove == -1)
-						{
-							dirList.push_back(2);
-							if (rotationGoal == 360)
-							{
-								rotationGoal -= 45;
-							}
-							else if (rotationGoal == 180)
-							{
-								rotationGoal += 45;
-							}
-							else
-							{
-								rotationGoal = 270;
-							}
-						}
-					}
-					if (Mapper::activeEntities[entID].abilities[i].function == moveRight)//if the move right function
-					{
-						if (xMove == 1)
-						{
-							dirList.push_back(3);
-							if (rotationGoal == 360)
-							{
-								rotationGoal += 45;
-							}
-							else if (rotationGoal == 180)
-							{
-								rotationGoal -= 45;
-							}
-							else
-							{
-								rotationGoal = 90;
-							}
-						}
-					}
-				}
-				//split vel by each dir
-				totalApplyVel /= dirList.size();
-				for (int i = 0; i < dirList.size(); i++)//go thru each dir
-				{
-					switch (dirList[i])
-					{
-					case 0:
-						Mapper::activeEntities[entID].yVel -= totalApplyVel;
-						break;
-					case 1:
-						Mapper::activeEntities[entID].yVel += totalApplyVel;
-						break;
-					case 2:
-						Mapper::activeEntities[entID].xVel -= totalApplyVel;
-						break;
-					case 3:
-						Mapper::activeEntities[entID].xVel += totalApplyVel;
-						break;
-					}
-				}
-				if (rotationGoal > 0)
-				{
-					float rotationChange = rotationGoal - Mapper::activeEntities[entID].rotation;
-					if (rotationChange > 180)
-					{
-						rotationChange -= 360;
-					}
-					if (rotationChange < -180)
-					{
-						rotationChange += 360;
-					}
-					float rotationScaled = rotationChange * 0.1;
+					//variables for how we need to move on each axis MAYBE MAKE IT A GOAL(MIDDLE OF THE TILE) THAT WE ROTATE TOO THEN MOVE FORWARD IN THAT DIRECTION
+					int xMove = movePos.x - entPathsTilePos.x;
+					int yMove = movePos.y - entPathsTilePos.y;
 
-					Mapper::activeEntities[entID].rotation += rotationScaled;
+
+
+
+					//use move variables to move ent towards destination MAKE USE OF ABILITIES NOT ADDING VEL DIRECTLY
+					//where we want the ent to be facing
+					float rotationGoal = -1;
+					//total vel to be applied
+					float totalApplyVel = .35;
+					//double if running
+					if (Mapper::activeEntities[entID].running)
+					{
+						totalApplyVel *= 2;
+					}
+					//list of what directions we are going MAYBE SWAP OUT FOR MAKING IT WALK TOWARDS THE WAY ITS FACING
+					std::vector<int> dirList;
+					for (int i = 0; i < Mapper::activeEntities[entID].abilities.size(); i++)//go thru each ability
+					{
+						if (Mapper::activeEntities[entID].abilities[i].function == moveUp)//if the move up function
+						{
+							if (yMove == -1)
+							{
+								dirList.push_back(0);
+								rotationGoal = 360;
+							}
+						}
+						if (Mapper::activeEntities[entID].abilities[i].function == moveDown)//if the move down function
+						{
+							if (yMove == 1)
+							{
+								dirList.push_back(1);
+								rotationGoal = 180;
+							}
+						}
+						if (Mapper::activeEntities[entID].abilities[i].function == moveLeft)//if the move left function
+						{
+							if (xMove == -1)
+							{
+								dirList.push_back(2);
+								if (rotationGoal == 360)
+								{
+									rotationGoal -= 45;
+								}
+								else if (rotationGoal == 180)
+								{
+									rotationGoal += 45;
+								}
+								else
+								{
+									rotationGoal = 270;
+								}
+							}
+						}
+						if (Mapper::activeEntities[entID].abilities[i].function == moveRight)//if the move right function
+						{
+							if (xMove == 1)
+							{
+								dirList.push_back(3);
+								if (rotationGoal == 360)
+								{
+									rotationGoal += 45;
+								}
+								else if (rotationGoal == 180)
+								{
+									rotationGoal -= 45;
+								}
+								else
+								{
+									rotationGoal = 90;
+								}
+							}
+						}
+					}
+					//split vel by each dir
+					totalApplyVel /= dirList.size();
+					for (int i = 0; i < dirList.size(); i++)//go thru each dir
+					{
+						switch (dirList[i])
+						{
+						case 0:
+							Mapper::activeEntities[entID].yVel -= totalApplyVel;
+							break;
+						case 1:
+							Mapper::activeEntities[entID].yVel += totalApplyVel;
+							break;
+						case 2:
+							Mapper::activeEntities[entID].xVel -= totalApplyVel;
+							break;
+						case 3:
+							Mapper::activeEntities[entID].xVel += totalApplyVel;
+							break;
+						}
+					}
+					if (rotationGoal > 0)
+					{
+						float rotationChange = rotationGoal - Mapper::activeEntities[entID].rotation;
+						if (rotationChange > 180)
+						{
+							rotationChange -= 360;
+						}
+						if (rotationChange < -180)
+						{
+							rotationChange += 360;
+						}
+						float rotationScaled = rotationChange * 0.1;
+
+						Mapper::activeEntities[entID].rotation += rotationScaled;
+					}
 				}
 			}
 		}
@@ -1336,31 +1339,31 @@ void Mapper::draw()
 
 	//TEMP
 	//draw an overlay to see how an ent gets around
-	int entID = 0;
-	for (int x = 0; x < Mapper::activeEntities[entID].paths.size(); x++)
-	{
-		for (int y = 0; y < Mapper::activeEntities[entID].paths[0].size(); y++)
-		{
-			//draw ent 
-			if (int(Mapper::activeEntities[entID].xPos / 64) - Mapper::activeEntities[entID].pathsMapPos.x == x && int(Mapper::activeEntities[entID].yPos / 64) - Mapper::activeEntities[entID].pathsMapPos.y == y)
-			{
-				artist.drawImage(Mapper::activeEntities[entID].tex[3], 64 * x, 64 * y);
-			}
-			//draw goal
-			if (int(Mapper::activeEntities[entID].destination.x / 64) - Mapper::activeEntities[entID].pathsMapPos.x == x && int(Mapper::activeEntities[entID].destination.y / 64) - Mapper::activeEntities[entID].pathsMapPos.y == y)
-			{
-				artist.drawImage(Mapper::activeEntities[entID].tex[0], 64 * x, 64 * y);
-			}
-			if (Mapper::activeEntities[entID].visitable[x][y])
-			{
-				artist.drawImage(Artist::gYes, 64 * x, 64 * y);
-			}
-			else
-			{
-				artist.drawImage(Artist::gNo, 64 * x, 64 * y);
-			}
-		}
-	}
+	//int entID = 0;
+	//for (int x = 0; x < Mapper::activeEntities[entID].paths.size(); x++)
+	//{
+	//	for (int y = 0; y < Mapper::activeEntities[entID].paths[0].size(); y++)
+	//	{
+	//		//draw ent 
+	//		if (int(Mapper::activeEntities[entID].xPos / 64) - Mapper::activeEntities[entID].pathsMapPos.x == x && int(Mapper::activeEntities[entID].yPos / 64) - Mapper::activeEntities[entID].pathsMapPos.y == y)
+	//		{
+	//			artist.drawImage(Mapper::activeEntities[entID].tex[3], 64 * x, 64 * y);
+	//		}
+	//		//draw goal
+	//		if (int(Mapper::activeEntities[entID].destination.x / 64) - Mapper::activeEntities[entID].pathsMapPos.x == x && int(Mapper::activeEntities[entID].destination.y / 64) - Mapper::activeEntities[entID].pathsMapPos.y == y)
+	//		{
+	//			artist.drawImage(Mapper::activeEntities[entID].tex[0], 64 * x, 64 * y);
+	//		}
+	//		if (Mapper::activeEntities[entID].visitable[x][y])
+	//		{
+	//			artist.drawImage(Artist::gYes, 64 * x, 64 * y);
+	//		}
+	//		else
+	//		{
+	//			artist.drawImage(Artist::gNo, 64 * x, 64 * y);
+	//		}
+	//	}
+	//}
 }
 
 void Mapper::controller()//prolly can move elsewhere like HUD
